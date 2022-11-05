@@ -25,6 +25,8 @@
 }                     from 'wechaty'
 import qrcodeTerminal from 'qrcode-terminal'
 
+const TOPIC = "TDD pair"
+
 function onScan (qrcode, status) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
     qrcodeTerminal.generate(qrcode, { small: true })  // show qrcode on console
@@ -52,13 +54,27 @@ function onLogout (user) {
 async function onMessage (msg) {
   log.info('StarterBot', msg.toString())
 
-  if (msg.text() === 'ding') {
-    await msg.say('dong')
+  const room = msg.room()
+  if (!room) {
+    return
+  }
+
+  const topic = await room.topic()
+  if (topic === TOPIC) {
+    if (msg.text() === 'hi') {
+      await msg.say("What can I do for you?")
+    }
   }
 }
 
 const bot = WechatyBuilder.build({
-  name: 'ding-dong-bot',
+  name: 'wechat-assistant',
+  puppetOptions: {
+    tls: {
+      disable: false
+    },
+    token: "puppet_padlocal_6d1a3ae013a44353a1921374fc1e5f34" // !!!!! Please change it !!!!!
+  },
   /**
    * How to set Wechaty Puppet Provider:
    *
@@ -71,7 +87,7 @@ const bot = WechatyBuilder.build({
    *  - wechaty-puppet-service (token required, see: <https://wechaty.js.org/docs/puppet-services>)
    *  - etc. see: <https://github.com/wechaty/wechaty-puppet/wiki/Directory>
    */
-  // puppet: 'wechaty-puppet-wechat',
+  puppet: 'wechaty-puppet-padlocal',
 })
 
 bot.on('scan',    onScan)
@@ -80,5 +96,16 @@ bot.on('logout',  onLogout)
 bot.on('message', onMessage)
 
 bot.start()
-  .then(() => log.info('StarterBot', 'Starter Bot Started.'))
+  .then(async () => {
+    log.info('StarterBot', 'Starter Bot Started.')
+    // const room = await bot.Room.find({topic: TOPIC}) // change `event-room` to any room topic in your wechat
+    // if (room) {
+    //   room.on('join', async (room, inviteeList, inviter) => {
+    //     const nameList = inviteeList.map(c => c.name()).join(',')
+    //     // console.log(`Room got new member ${nameList}, invited by ${inviter}`)
+    //     await room.say(`欢迎${nameList}加入直播间！`)
+    //   })
+    // }
+  })
   .catch(e => log.error('StarterBot', e))
+
